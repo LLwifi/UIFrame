@@ -52,11 +52,16 @@ enum class EUIInterface :uint8
 UENUM(BlueprintType)
 enum class EUIShowHideType :uint8
 {
-	Normal = 0 UMETA(DisplayName = "正常"),//通过Class或UI本身调用的Show/Hide
-	Parent UMETA(DisplayName = "父节点"),//由父节点调用的Show/Hide
-	Esc_FirstUI UMETA(DisplayName = "Esc_默认"),//首次或默认情况下打开该UI时应该展示的样式，当UI_SubSystem的EscList为空时，该函数会在Show之后被调用
-	Esc_Top UMETA(DisplayName = "Esc_顶层"),//进入或离开最上层
-	Esc UMETA(DisplayName = "Esc")//Esc框架调用的Show/Hide
+	//通过UI_SubSystem或调用的Show/Hide
+	Normal = 0 UMETA(DisplayName = "正常"),
+	//由父节点调用的Show/Hide
+	Parent UMETA(DisplayName = "父节点"),
+	//当UI_SubSystem的EscList为空时，该函数会在Show之后被调用
+	Esc_FirstUI UMETA(DisplayName = "Esc_首个"),
+	//进入或离开ESC最上层
+	Esc_Top UMETA(DisplayName = "Esc_顶层"),
+	//Esc框架调用的Show/Hide
+	Esc UMETA(DisplayName = "Esc")
 };
 
 // This class does not need to be modified.
