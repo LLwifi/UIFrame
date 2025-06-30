@@ -642,23 +642,24 @@ URedPointTree* UUI_SubSystem::SetRedPointTree(URedPointTree* RedPointTree)
 
 void UUI_SubSystem::RootPanelCheck()
 {
-	if (!RootPanel)
+	if (!RootPanel && !RootPanelClass.Get())
 	{
-		if (!RootPanelClass)
-		{
-			RootPanelClass = UAssetManager::GetStreamableManager().LoadSynchronous(UUI_CommonGameConfig::GetInstance()->RootPanelClass);
-		}
+		RootPanelClass = UAssetManager::GetStreamableManager().LoadSynchronous(UUI_CommonGameConfig::GetInstance()->RootPanelClass);
 		RootPanel = CreateWidget(GetWorld(), RootPanelClass);
-		ShowUI(RootPanel);
-		//RootPanel->AddToViewport(0);
-		//获取Layout
-		TArray<UPanelWidget*> Layouts = UUI_FunctionLibrary::GetAllWidgetFromClass<UPanelWidget>(Cast<UPanelWidget>(RootPanel->GetRootWidget()),UPanelWidget::StaticClass(),true);
-		for (UPanelWidget* Panel : Layouts)
+
+		if (RootPanel)
 		{
-			FGameplayTag LayoutTag = FGameplayTag::RequestGameplayTag(FName(String_UI_Layout + Panel->GetName()));
-			if (LayoutTag.IsValid())
+			ShowUI(RootPanel);
+			//RootPanel->AddToViewport(0);
+			//获取Layout
+			TArray<UPanelWidget*> Layouts = UUI_FunctionLibrary::GetAllWidgetFromClass<UPanelWidget>(Cast<UPanelWidget>(RootPanel->GetRootWidget()), UPanelWidget::StaticClass(), true);
+			for (UPanelWidget* Panel : Layouts)
 			{
-				AddLayout(LayoutTag,Panel);
+				FGameplayTag LayoutTag = FGameplayTag::RequestGameplayTag(FName(String_UI_Layout + Panel->GetName()));
+				if (LayoutTag.IsValid())
+				{
+					AddLayout(LayoutTag, Panel);
+				}
 			}
 		}
 	}
