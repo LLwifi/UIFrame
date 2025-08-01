@@ -20,9 +20,10 @@ DECLARE_LOG_CATEGORY_EXTERN(UIFrame, Log, All);
 UENUM(BlueprintType)
 enum class EUILevel :uint8
 {
-	Bot = 0 UMETA(DisplayName = "背景层"),
-	Mid UMETA(DisplayName = "显示层"),
-	Top UMETA(DisplayName = "弹窗层"),
+	Background = 0 UMETA(DisplayName = "背景层"),
+	Bot UMETA(DisplayName = "低层"),
+	Mid UMETA(DisplayName = "中层-显示层"),
+	Top UMETA(DisplayName = "上层"),
 	System UMETA(DisplayName = "系统层")
 };
 
@@ -143,9 +144,18 @@ public:
 		bool IsControlledByEsc();
 	virtual bool IsControlledByEsc_Implementation();
 
+	/*当“我”已经存在于ESC列表中被再次要求显示（Show）时，是否要移除之前ESC列表中的“我”（是否要移除之前关于“我”的记录）
+	* 想要实现该功能，该UI必须被ESC管理起来：IsControlledByEsc返回为true
+	*/
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+		bool IsClearHistoricalRecords();
+	virtual bool IsClearHistoricalRecords_Implementation();
+
 	/*Esc框架下隐藏UI会调用的函数，默认情况下会调用UI的Hide函数
 	* 返回值：表示UI是否准备好了从Esc列表中移除 返回true时才会真正从EscList中移除自身
 	* 该函数C++默认调用了自身的Hide 默认返回为true
+	* 
+	* 注意：在该函数的中使用UUI_SubSystem调用Hide的时候CheckESC 必须为false 否则会触发死循环
 	*/
 	UFUNCTION(BlueprintNativeEvent)
 		bool Esc(UWidget* TriggerUI);

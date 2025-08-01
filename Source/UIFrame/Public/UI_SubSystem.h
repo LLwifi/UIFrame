@@ -9,7 +9,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUISubSystem_ESCChange, const TArray<UUserWidget*>&, ESCList);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUISubSystem_UIInputModeChange, EUIInputMode, UIInputMode);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUISubSystem_MainUIChange, UWidget*, MainUI);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUISubSystem_UIChange, UWidget*, ChangeUI);
 
 /**
  UI子系统
@@ -61,6 +61,14 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "1", DefaultToSelf = "Widget"))
 		void HideUI(UWidget* Widget, bool CheckUIState = true, bool CheckESC = true);
 
+	/*通过UI进行切换，如果UI的IsShow = true将调用HideUI，如果UI的IsShow = false将调用ShowUI
+	* Widget：进行切换的UI
+	* CheckUIState：是否要检测UI当前的显示状态来判断是否调用真正的显示函数
+	* HideIsCheckESC：在Hide的时候是否要进行Esc检测
+	*/
+	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "1", DefaultToSelf = "Widget"))
+		void SwitchUI(UWidget* Widget, bool CheckUIState = true, bool HideIsCheckESC = true);
+
 	/*
 	* 显示UI（UI类型，UI标记）
 	* 该UI未创建时，通过CreateUI创建-》显示-》返回
@@ -80,10 +88,21 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "1"))
 		void HideUIForClass(TSubclassOf<UUserWidget> UIClass, FName UITag = "", bool CheckUIState = true, bool CheckESC = true);
 
+	/*
+	* 切换UI（UI类型，UI标记）
+	* 该UI未创建时，通过CreateUI创建-》显示-》返回
+	* 该UI创建时，如果UI的IsShow = true将调用HideUIForClass，如果UI的IsShow = false将调用ShowUIForClass
+	* Class版本的接口的使用情况会认为是没有拿到具体UI的情况下调用
+	* CheckUIState：是否要检测UI当前的显示状态来判断是否调用真正的显示函数
+	* HideIsCheckESC：在Hide的时候是否要进行Esc检测
+	*/
+	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "1"))
+		UWidget* SwitchUIForClass(TSubclassOf<UUserWidget> UIClass, FName UITag = "", bool CheckUIState = true, bool HideIsCheckESC = true);
+
 	//删除UI（UI类型，是否删除全部同类型的UI，UI标记）
 	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "2"))
 		void DeleteUIForClass(TSubclassOf<UUserWidget> UIClass, bool DeleteAllSameType = false, FName UITag = "");
-	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "1"))
+	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = "1", DefaultToSelf = "UI"))
 		void DeleteUI(UUserWidget* UI,FName UITag = "");
 	
 	//获取UI（UI类型，UI标记）
@@ -108,7 +127,15 @@ public:
 	 
 public:
 	UPROPERTY(BlueprintAssignable)
-	FUISubSystem_MainUIChange MainUIChange;
+	FUISubSystem_UIChange ShowUIEvent;
+	UPROPERTY(BlueprintAssignable)
+	FUISubSystem_UIChange HideUIEvent;
+	UPROPERTY(BlueprintAssignable)
+	FUISubSystem_UIChange CreateUIEvent;
+	UPROPERTY(BlueprintAssignable)
+	FUISubSystem_UIChange DeleteUIEvent;
+	UPROPERTY(BlueprintAssignable)
+	FUISubSystem_UIChange MainUIChange;
 	UPROPERTY(BlueprintAssignable)
 	FUISubSystem_UIInputModeChange UIInputModeChange;
 
@@ -168,9 +195,21 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void Esc();
 
-	//EscUI的有效检测 递归
+	/*Esc操作，循环关闭ESCList最上层UI直到Target
+	* TargetUI：循环关闭的判断依据
+	* IsClear：是否完全清除该UI在ESC列表的痕迹，该值为false时只会循环关闭到最上方的TargetUI
+	*/
+	UFUNCTION(BlueprintCallable)
+		void EscToTarget(UUserWidget* TargetUI, bool IsClear = true);
+
+	/*EscUI的有效检测 递归
+	* CurTopIndex：从该下标开始递归寻找一个有效的顶层UI
+	* TopIndex：找到顶层UI后它在数组中的下标
+	* TopUI：找到的那个顶层UI
+	* return：是否找到了有效的顶层UI
+	*/
 	UFUNCTION()
-		bool FindTopValidEscUI(int32 TopIndex,UUserWidget*& TopUI);
+		bool FindTopValidEscUI(int32 CurTopIndex, int32& TopIndex, UUserWidget*& TopUI);
 
 	/*隐藏全部esc列表的UI
 	* IsClearEscList：要不要清除ESCList，隐藏不一定需要清空数据，现在开启一个单独显示的UI时会隐藏ESC列表的全部UI

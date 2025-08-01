@@ -45,6 +45,7 @@ public:
 	virtual void HideUI_Implementation(UWidget* TriggerUI) override;
 	virtual bool IsFollowParentInteract_Implementation() override;
 	virtual bool IsControlledByEsc_Implementation() override;
+	virtual bool IsClearHistoricalRecords_Implementation() override;
 	virtual bool Esc_Implementation(UWidget* TriggerUI) override;
 	virtual bool IsSeparatelyShow_Implementation() override;
 	virtual EUIInputMode GetUIInputMode_Implementation() override;
@@ -97,6 +98,12 @@ public:
 	//是否被Esc控制
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "UI_PanelInteract")
 		bool bIsControlledByEsc = false;
+
+	/*当“我”已经存在于ESC列表中被再次要求显示（Show）时，是否要移除之前ESC列表中的“我”（是否要移除之前关于“我”的记录）
+	* 想要实现该功能，该UI必须被ESC管理起来：IsControlledByEsc返回为true
+	*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "UI_PanelInteract", meta = (EditCondition = "bIsControlledByEsc"))
+		bool bIsClearHistoricalRecords = false;
 
 	//是否在Show时独立显示
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "UI_PanelInteract", meta = (EditCondition = "bIsControlledByEsc"))

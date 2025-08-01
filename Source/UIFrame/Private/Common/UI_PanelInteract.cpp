@@ -62,6 +62,11 @@ bool IUI_PanelInteract::IsControlledByEsc_Implementation()
 	return false;
 }
 
+bool IUI_PanelInteract::IsClearHistoricalRecords_Implementation()
+{
+	return false;
+}
+
 bool IUI_PanelInteract::Esc_Implementation(UWidget* TriggerUI)
 {
 	return true;

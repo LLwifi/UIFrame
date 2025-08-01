@@ -126,9 +126,10 @@ UUserWidget* UUI_SubSystem::CreateUI(TSubclassOf<UUserWidget> UIClass, UUI_Widge
 			{ 
 				Widget->AddToViewport();
 			}
+			AddUI(Widget, CurUITag);
 		}
 
-		AddUI(Widget, CurUITag);
+		CreateUIEvent.Broadcast(Widget);
 
 		//实现了红点接口的UI---初始判断是否开启
 		if (Widget->Implements<UUI_RedPointInteract>() && CurRedPointTree)
@@ -156,13 +157,13 @@ void UUI_SubSystem::ShowUI(UWidget* Widget, bool CheckUIState /*= true*/)
 			{
 				SeparatelyUICheck(Widget);
 				IUI_PanelInteract::Execute_Show(Widget, Widget, EUIShowHideType::Normal);
+				ShowUIEvent.Broadcast(Widget);
 			}
 		}
 		else
 		{
-			AddUI(Widget);
+			AddUI(Widget, "", false);
 		}
-		
 	}
 }
 
@@ -175,12 +176,29 @@ void UUI_SubSystem::HideUI(UWidget* Widget, bool CheckUIState /*= true*/, bool C
 		{
 			// 自己是Esc列表最上层的UI
 			UUserWidget* EscTopUI;
-			if (FindTopValidEscUI(ESCList.Num() - 1, EscTopUI) && EscTopUI == Widget)
+			int32 TopUIIndex;
+			if (FindTopValidEscUI(ESCList.Num() - 1, TopUIIndex, EscTopUI) && EscTopUI == Widget)
 			{
 				HideTopEscUI();
 			}
 		}
 		IUI_PanelInteract::Execute_Hide(Widget, Widget, EUIShowHideType::Normal);
+		HideUIEvent.Broadcast(Widget);
+	}
+}
+
+void UUI_SubSystem::SwitchUI(UWidget* Widget, bool CheckUIState, bool HideIsCheckESC)
+{
+	if (IsValid(Widget) && Widget->Implements<UUI_PanelInteract>())
+	{
+		if (IUI_PanelInteract::Execute_IsShow(Widget))
+		{
+			HideUI(Widget, CheckUIState, HideIsCheckESC);
+		}
+		else
+		{
+			ShowUI(Widget, CheckUIState);
+		}
 	}
 }
 
@@ -203,6 +221,29 @@ UWidget* UUI_SubSystem::ShowUIForClass(TSubclassOf<UUserWidget> UIClass, bool Ch
 void UUI_SubSystem::HideUIForClass(TSubclassOf<UUserWidget> UIClass, FName UITag /*= ""*/, bool CheckUIState/* = true*/, bool CheckESC/* = true*/)
 {
 	HideUI(GetUI(UIClass, UITag), CheckUIState, CheckESC);
+}
+
+UWidget* UUI_SubSystem::SwitchUIForClass(TSubclassOf<UUserWidget> UIClass, FName UITag, bool CheckUIState, bool HideIsCheckESC)
+{
+	UWidget* Widget = GetUI(UIClass, UITag);
+
+	if (IsValid(Widget) && Widget->Implements<UUI_PanelInteract>())
+	{
+		if (IUI_PanelInteract::Execute_IsShow(Widget))
+		{
+			HideUIForClass(UIClass, UITag, CheckUIState, HideIsCheckESC);
+		}
+		else
+		{
+			ShowUIForClass(UIClass, CheckUIState, UITag);
+		}
+	}
+	else
+	{
+		Widget = CreateUI(UIClass, nullptr, true, UITag);
+	}
+
+	return Widget;
 }
 
 void UUI_SubSystem::DeleteUIForClass(TSubclassOf<UUserWidget> UIClass, bool DeleteAllSameType /*= false*/, FName UITag /*= ""*/)
@@ -232,11 +273,12 @@ void UUI_SubSystem::DeleteUI(UUserWidget* UI, FName UITag /*= ""*/)
 {
 	if (UI)
 	{
-		TryRemoveUIFromEsc(UI);
+		//TryRemoveUIFromEsc(UI); ESC会通过FindTopValidEscUI函数获取有效的UI，这里不用管是否还存在于Esc列表中
 		if (AllUI.Contains(UI->GetClass()) && AllUI[UI->GetClass()].Contains(UITag))
 		{
 			UI->RemoveFromParent();
 			AllUI[UI->GetClass()].AllWidget.Remove(UITag);
+			DeleteUIEvent.Broadcast(UI);
 			int32 WidgetNum = AllUI[UI->GetClass()].WidgetNum();
 			UE_LOG(UIFrame, Log, TEXT("DeleteUI UI-[%s] AllUI[%s].WidgetNum() = %d"),*UI->GetName(),*UI->GetClass()->GetName(),WidgetNum);
 			//该类型已经没有UI了
@@ -244,7 +286,6 @@ void UUI_SubSystem::DeleteUI(UUserWidget* UI, FName UITag /*= ""*/)
 			{
 				AllUI.Remove(UI->GetClass());
 			}
-
 		}
 	}
 }
@@ -370,6 +411,7 @@ void UUI_SubSystem::SeparatelyUICheck(UWidget* UI, bool IsShow /*= true*/)
 			if (ESCList.Num() == 1)//该面板是从主界面打开的面板
 			{
 				IUI_PanelInteract::Execute_Show(UI, UI, EUIShowHideType::Esc_FirstUI);
+				ShowUIEvent.Broadcast(UI);
 			}
 			
 			if (IUI_PanelInteract::Execute_IsSeparatelyShow(UI))
@@ -409,10 +451,12 @@ void UUI_SubSystem::EscChangeUIDisplayState(UWidget* UI, UWidget* TriggerUI, boo
 		if (IsShow)
 		{
 			IUI_PanelInteract::Execute_Show(UI,TriggerUI, EUIShowHideType::Esc);
+			ShowUIEvent.Broadcast(UI);
 		}
 		else
 		{
 			IUI_PanelInteract::Execute_Hide(UI,TriggerUI, EUIShowHideType::Esc);
+			HideUIEvent.Broadcast(UI);
 		}
 	}
 }
@@ -434,19 +478,19 @@ void UUI_SubSystem::SetDisableShowEscPanel(bool IsDisable)
 
 void UUI_SubSystem::HideTopEscUI()
 {
-	// 自己是Esc列表最上层的UI
 	UUserWidget* EscTopUI;
-	if (FindTopValidEscUI(ESCList.Num() - 1,EscTopUI))
+	int32 TopEscUIIndex;
+	if (FindTopValidEscUI(ESCList.Num() - 1, TopEscUIIndex, EscTopUI))
 	{
 		//移除单独显示UI记录的下标
 		if (IUI_PanelInteract::Execute_IsSeparatelyShow(EscTopUI))
 		{
-			SeparatelyUIIndex.Remove(ESCList.Find(EscTopUI));
+			SeparatelyUIIndex.Remove(TopEscUIIndex);
 		}
 		
-		if (IUI_PanelInteract::Execute_Esc(EscTopUI, ESCList.Last()))
+		if (IUI_PanelInteract::Execute_Esc(EscTopUI, ESCList.Last()) && ESCList.IsValidIndex(TopEscUIIndex))//避免嵌套调用的判断 Esc会调用Hide，可能导致该函数被嵌套调用
 		{
-			ESCList.Remove(EscTopUI);
+			ESCList.RemoveAt(TopEscUIIndex);
 			ESCListChange.Broadcast(ESCList);
 
 			SeparatelyUICheck(EscTopUI, false);
@@ -492,24 +536,51 @@ void UUI_SubSystem::Esc()
 	}
 }
 
-bool UUI_SubSystem::FindTopValidEscUI(int32 TopIndex,UUserWidget*& TopUI)
+void UUI_SubSystem::EscToTarget(UUserWidget* TargetUI, bool IsClear)
 {
-	if (ESCList.IsValidIndex(TopIndex))
+	if (bIsDisableEsc)//是否禁用了Esc
+	{
+		return;
+	}
+
+	bool IsContinue = true;
+	while (ESCList.Num() > 0 && IsContinue)
+	{
+		UUserWidget* EscTopUI;
+		int32 TopEscUIIndex;
+		FindTopValidEscUI(ESCList.Num() - 1, TopEscUIIndex, EscTopUI);
+		if (EscTopUI == TargetUI)//找到了TargetUI
+		{
+			HideTopEscUI();
+			//如果需要清除 判断esc列表是否还有该目标UI 没有则退出
+			IsContinue = IsClear ? ESCList.Contains(TargetUI): false;
+		}
+		else if (ESCList.Num() > 0)
+		{
+			HideTopEscUI();
+		}
+	}
+}
+
+bool UUI_SubSystem::FindTopValidEscUI(int32 CurTopIndex, int32& TopIndex, UUserWidget*& TopUI)
+{
+	if (ESCList.IsValidIndex(CurTopIndex))
 	{
 		//在Esc回退的过程中需要判断要回退开启的那个UI是否有效，无效时略过它的开启逻辑 并一直往后寻找到一个有效的UI
-		if (ESCList[TopIndex])
+		if (ESCList[CurTopIndex])
 		{
-			TopUI = ESCList[TopIndex];
+			TopUI = ESCList[CurTopIndex];
+			TopIndex = CurTopIndex;
 			return true;
 		}
 		else
 		{
-			if (ESCList.IsValidIndex(TopIndex))
+			if (ESCList.IsValidIndex(CurTopIndex))
 			{
-				ESCList.RemoveAt(TopIndex);//移除这个无效的UI
+				ESCList.RemoveAt(CurTopIndex);//移除这个无效的UI
 				ESCListChange.Broadcast(ESCList);
 			}
-			return FindTopValidEscUI(TopIndex-1,TopUI);
+			return FindTopValidEscUI(CurTopIndex -1, TopIndex, TopUI);
 		}
 	}
 	return false;
@@ -541,12 +612,18 @@ void UUI_SubSystem::HideAllEscUI(bool IsClearEscList/* = false*/)
 
 void UUI_SubSystem::EscAddCheck(UWidget* Widget)
 {
-	if (IsValid(Widget) && !ESCList.Contains(Widget))
+	if (IsValid(Widget))
 	{
-		//实现了IUI_PanelInteract的UserWidget
+		//实现了IUI_PanelInteract的UserWidget  && 愿意被Esc管理
 		UUserWidget* UserWidget = Cast<UUserWidget>(Widget);
 		if (UserWidget && UserWidget->Implements<UUI_PanelInteract>() && IUI_PanelInteract::Execute_IsControlledByEsc(UserWidget))
 		{
+			//是否要移除之前ESC列表中的“我”
+			if (IUI_PanelInteract::Execute_IsClearHistoricalRecords(UserWidget))
+			{
+				ESCList.Remove(UserWidget);
+			}
+
 			ESCList.Add(UserWidget);
 			ESCListChange.Broadcast(ESCList);
 			if (IUI_PanelInteract::Execute_IsSeparatelyShow(UserWidget))
@@ -587,15 +664,9 @@ bool UUI_SubSystem::TryRemoveUIFromEsc(UUserWidget* UI)
 {
 	if (UI)
 	{
-		for (UUserWidget* UserWidget : ESCList)
-		{
-			if (UI == UserWidget)
-			{
-				ESCList.Remove(UserWidget);
-				ESCListChange.Broadcast(ESCList);
-				return true;
-			}
-		}
+		ESCList.Remove(UI);//该函数会把数组中全部该值的元素进行移除
+		ESCListChange.Broadcast(ESCList);
+		return true;
 	}
 	return false;
 }
@@ -615,9 +686,11 @@ void UUI_SubSystem::UpdateEscListTopPanel(UWidget* NewTopPanel, UWidget* Trigger
 	if (NewTopPanel)
 	{
 		IUI_PanelInteract::Execute_Show(NewTopPanel,TriggerUI, EUIShowHideType::Esc_Top);
+		ShowUIEvent.Broadcast(NewTopPanel);
 		if(EscListTopPanel)
 		{
 			IUI_PanelInteract::Execute_Hide(EscListTopPanel,TriggerUI, EUIShowHideType::Esc_Top);
+			HideUIEvent.Broadcast(EscListTopPanel);
 		}
 		FString LastTopPanelName = IsValid(EscListTopPanel)?EscListTopPanel->GetName():"NULL";
 		UE_LOG(UIFrame, Log, TEXT("UpdateEscListTopPanel [%s]——>[%s]"),*LastTopPanelName,*NewTopPanel->GetName());

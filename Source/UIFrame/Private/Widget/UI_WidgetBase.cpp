@@ -117,6 +117,11 @@ bool UUI_WidgetBase::IsControlledByEsc_Implementation()
 	return bIsControlledByEsc;
 }
 
+bool UUI_WidgetBase::IsClearHistoricalRecords_Implementation()
+{
+	return bIsClearHistoricalRecords;
+}
+
 bool UUI_WidgetBase::Esc_Implementation(UWidget* TriggerUI)
 {
 	IUI_PanelInteract::Execute_Hide(this, TriggerUI, EUIShowHideType::Esc);
