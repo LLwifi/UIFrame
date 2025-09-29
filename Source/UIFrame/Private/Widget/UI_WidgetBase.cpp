@@ -71,6 +71,8 @@ void UUI_WidgetBase::Show_Implementation(UWidget* TriggerUI, EUIShowHideType Typ
 		UE_LOG(UIFrame, Log, TEXT("Event-Show(%s) UI-[%s]"),
 			*CompileModeEnum->GetDisplayNameTextByValue(static_cast<uint8>(Type)).ToString(), *GetName());
 	}
+
+	ShowDelegate.Broadcast(this, Type);
 	
 	CurUIShowHideType = Type;
 	if (!bIsShow && Type != EUIShowHideType::Esc_Top)//Esc_Top是一个纯时机的枚举，它表示进入/立刻EscList的顶层
@@ -78,6 +80,7 @@ void UUI_WidgetBase::Show_Implementation(UWidget* TriggerUI, EUIShowHideType Typ
 		bIsShow = true;
 		IUI_PanelInteract::Execute_ShowUI(this,TriggerUI);
 		UE_LOG(UIFrame, Log, TEXT("Display-ShowUI UI-[%s]"),*GetName());
+		SwitchUIDelegate.Broadcast(this, true);
 	}
 }
 
@@ -89,6 +92,8 @@ void UUI_WidgetBase::Hide_Implementation(UWidget* TriggerUI, EUIShowHideType Typ
 		UE_LOG(UIFrame, Log, TEXT("Event-Hide(%s) UI-[%s]"),
 			*CompileModeEnum->GetDisplayNameTextByValue(static_cast<uint8>(Type)).ToString(), *GetName());
 	}
+
+	HideDelegate.Broadcast(this, Type);
 	
 	CurUIShowHideType = Type;
 	if (bIsShow && Type != EUIShowHideType::Esc_Top)//Esc_Top是一个纯时机的枚举，它表示进入/立刻EscList的顶层
@@ -96,6 +101,7 @@ void UUI_WidgetBase::Hide_Implementation(UWidget* TriggerUI, EUIShowHideType Typ
 		bIsShow = false;
 		IUI_PanelInteract::Execute_HideUI(this,TriggerUI);
 		UE_LOG(UIFrame, Log, TEXT("Display-HideUI UI-[%s]"),*GetName());
+		SwitchUIDelegate.Broadcast(this, false);
 	}
 }
 

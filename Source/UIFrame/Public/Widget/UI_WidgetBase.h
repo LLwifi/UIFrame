@@ -7,6 +7,9 @@
 #include "Blueprint/UserWidget.h"
 #include "UI_WidgetBase.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUI_ShowOrHideUI, UWidget*, UI, EUIShowHideType, UIShowHideType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUI_SwitchUI, UWidget*, UI, bool, IsShow);
+
 /**
  * 控件基类
  * 当玩家希望创建包含某种功能却不独立显示的控件时，继承该类
@@ -108,4 +111,13 @@ public:
 	//是否在Show时独立显示
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "UI_PanelInteract", meta = (EditCondition = "bIsControlledByEsc"))
 		bool bIsSeparatelyShow = false;
+
+	public:
+		UPROPERTY(BlueprintAssignable)
+		FUI_ShowOrHideUI ShowDelegate;
+		UPROPERTY(BlueprintAssignable)
+		FUI_ShowOrHideUI HideDelegate;
+		//当该UI Show状态改变时会被触发
+		UPROPERTY(BlueprintAssignable)
+		FUI_SwitchUI SwitchUIDelegate;
 };

@@ -11,6 +11,12 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Engine/AssetManager.h"
 
+void UUI_SubSystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	CurInputMode = EUIInputMode::None;
+}
+
 void UUI_SubSystem::Deinitialize()
 {
 	Super::Deinitialize();
@@ -174,9 +180,11 @@ void UUI_SubSystem::HideUI(UWidget* Widget, bool CheckUIState /*= true*/, bool C
 	{
 		if (CheckESC)
 		{
-			// 自己是Esc列表最上层的UI
 			UUserWidget* EscTopUI;
 			int32 TopUIIndex;
+			/*只有最上层的UI Hide的时候才会从Esc列表中移除
+			* 否则一个单独显示的UI被显示时会从esc列表中移除它之下的UI
+			*/
 			if (FindTopValidEscUI(ESCList.Num() - 1, TopUIIndex, EscTopUI) && EscTopUI == Widget)
 			{
 				HideTopEscUI();
@@ -356,6 +364,10 @@ void UUI_SubSystem::SetUIInputMode(EUIInputMode InputMode, UWidget* UserWidget /
 		}
 		CurInputMode = InputMode;
 		UIInputModeChange.Broadcast(CurInputMode);
+
+		FString UIInputModeName;
+		UEnum::GetValueAsString(CurInputMode, UIInputModeName);
+		UE_LOG(UIFrame, Warning, TEXT("UI_SubSystem SetUIInputMode-[%s]"), *UIInputModeName);
 	}
 }
 
@@ -538,7 +550,8 @@ void UUI_SubSystem::Esc()
 
 void UUI_SubSystem::EscToTarget(UUserWidget* TargetUI, bool IsClear)
 {
-	if (bIsDisableEsc)//是否禁用了Esc
+	//禁用了Esc 或 Esc列表中没有这个UI 时 不进行任何处理
+	if (bIsDisableEsc || !ESCList.Contains(TargetUI))
 	{
 		return;
 	}
@@ -551,14 +564,10 @@ void UUI_SubSystem::EscToTarget(UUserWidget* TargetUI, bool IsClear)
 		FindTopValidEscUI(ESCList.Num() - 1, TopEscUIIndex, EscTopUI);
 		if (EscTopUI == TargetUI)//找到了TargetUI
 		{
-			HideTopEscUI();
 			//如果需要清除 判断esc列表是否还有该目标UI 没有则退出
 			IsContinue = IsClear ? ESCList.Contains(TargetUI): false;
 		}
-		else if (ESCList.Num() > 0)
-		{
-			HideTopEscUI();
-		}
+		HideTopEscUI();
 	}
 }
 

@@ -23,6 +23,7 @@ class UIFRAME_API UUI_SubSystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
 public:
@@ -195,8 +196,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void Esc();
 
-	/*Esc操作，循环关闭ESCList最上层UI直到Target
-	* TargetUI：循环关闭的判断依据
+	/*Esc操作，循环关闭ESCList最上层UI直到关闭Target
+	* TargetUI：循环关闭的判断依据，若该值为空则不进行任何操作
 	* IsClear：是否完全清除该UI在ESC列表的痕迹，该值为false时只会循环关闭到最上方的TargetUI
 	*/
 	UFUNCTION(BlueprintCallable)
