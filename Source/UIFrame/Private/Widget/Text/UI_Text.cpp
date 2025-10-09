@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Widget/Text/UI_Text.h"
@@ -92,4 +92,13 @@ FPrefabTextInfo UUI_Text::GetTextInfo()
 	MyTextInfo.LineHeightPercentage = LineHeightPercentage;
 
 	return MyTextInfo;
+}
+
+void UUI_Text::SetWrapTextAt(float TextWrapTextAt)
+{
+	WrapTextAt = TextWrapTextAt;
+	if (MyTextBlock.IsValid())
+	{
+		MyTextBlock->SetWrapTextAt(TextWrapTextAt);
+	}
 }

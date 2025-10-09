@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -61,6 +61,10 @@ public:
 	//调试面板
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
 		TSoftClassPtr<UUserWidget> DebugPanelClass;
+
+	//Tips面板
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UUserWidget> TipPanelClass;
 
 	//ScrollBox的滚动条样式,Name是方案名称，Value是Style值
 	UPROPERTY(Config,EditAnywhere,BlueprintReadOnly,Category = "ScrollBox")

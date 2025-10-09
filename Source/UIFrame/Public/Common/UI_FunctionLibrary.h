@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -76,8 +76,15 @@ public:
 	* Widget：哪个控件
 	* InPanel：用于计算的Panel控件，在计算多个“同空间”下的控件位置时应该保证他们用于计算的Panel一致
 	*/
-	UFUNCTION(BlueprintPure, Category = "LL|UI")
+	UFUNCTION(BlueprintPure)
 	static FVector2D GetWidgetPosFormPanel(UWidget* Widget, UWidget* InPanel);
+
+	UFUNCTION(BlueprintPure, meta = (WorldContext = "WorldContextObject"))
+	static UUI_SubSystem* GetUISubSystem(UObject* WorldContextObject);
+
+	//显示提示文本(提示文本，显示时长)
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static void ShowTip(UObject* WorldContextObject, TSubclassOf<UUserWidget> WidgetClass, FText TipText, float DisplayTime, FName TipTag = "None", FName UITag = "None");
 };
 
 

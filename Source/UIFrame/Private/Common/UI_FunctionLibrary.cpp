@@ -1,7 +1,9 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Common/UI_FunctionLibrary.h"
+#include <Subsystems/SubsystemBlueprintLibrary.h>
+#include <UI_SubSystem.h>
 
 TArray<UWidget*> UUI_FunctionLibrary::GetAllWidgetFromClass(UPanelWidget* PanelWidget, TSubclassOf<UWidget> WidgetClass, bool IsContainUserWidget/* = false*/)
 {
@@ -46,4 +48,26 @@ FVector2D UUI_FunctionLibrary::GetWidgetPosFormPanel(UWidget* Widget, UWidget* I
 		Position = Geometry.AbsoluteToLocal(Widget->GetCachedGeometry().GetAbsolutePosition()) + Widget->GetCachedGeometry().GetLocalSize() / 2.0f;
 	}
 	return Position;
+}
+
+UUI_SubSystem* UUI_FunctionLibrary::GetUISubSystem(UObject* WorldContextObject)
+{
+	return Cast<UUI_SubSystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(WorldContextObject, UUI_SubSystem::StaticClass()));
+}
+
+void UUI_FunctionLibrary::ShowTip(UObject* WorldContextObject, TSubclassOf<UUserWidget> WidgetClass, FText TipText, float DisplayTime, FName TipTag/* = "None"*/, FName UITag/* = "None"*/)
+{
+	if (WidgetClass)
+	{
+		UUI_SubSystem* UI_SubSystem = GetUISubSystem(WorldContextObject);
+		if (UI_SubSystem)
+		{
+			UWidget* TipUI = UI_SubSystem->ShowUIForClass(WidgetClass,true, UITag);
+			if (TipUI)
+			{
+				IUI_Tip::Execute_AddTipText(TipUI, TipText, DisplayTime, TipTag);
+			}
+		}
+	}
+
 }

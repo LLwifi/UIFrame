@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
@@ -188,4 +188,26 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FGameplayTag GetUILayoutTag();
 	virtual FGameplayTag GetUILayoutTag_Implementation();
+};
+
+UINTERFACE(MinimalAPI)
+class UUI_Tip : public UInterface
+{
+	GENERATED_BODY()
+};
+
+/**
+ * UI提示接口
+ */
+class UIFRAME_API IUI_Tip
+{
+	GENERATED_BODY()
+public:
+	/*
+	* 添加一个提示文本（提示文本，显示时长，自定义标记）
+	*/
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void AddTipText(const FText& TipText, float DisplayTime, FName TipTag = "None");
+	virtual void AddTipText_Implementation(const FText& TipText, float DisplayTime, FName TipTag = "None");
+
 };

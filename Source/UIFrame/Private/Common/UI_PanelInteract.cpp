@@ -1,4 +1,4 @@
-﻿#include "Common/UI_PanelInteract.h"
+#include "Common/UI_PanelInteract.h"
 #include "UI_SubSystem.h"
 
 DEFINE_LOG_CATEGORY(UIFrame);
@@ -95,4 +95,8 @@ EUILevel IUI_PanelInteract::GetUILevel_Implementation()
 FGameplayTag IUI_PanelInteract::GetUILayoutTag_Implementation()
 {
 	return Tag_UI_Layout_Mid;
+}
+
+void IUI_Tip::AddTipText_Implementation(const FText& TipText, float DisplayTime, FName TipTag)
+{
 }
