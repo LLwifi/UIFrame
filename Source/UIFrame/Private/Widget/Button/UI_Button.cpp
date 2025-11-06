@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Widget/Button/UI_Button.h"
@@ -88,4 +88,33 @@ FPrefabButtonInfo UUI_Button::GetButtonInfo()
 	MyButtonInfo.PressMethod = GetPressMethod();
 
 	return MyButtonInfo;
+}
+
+void UUI_Button::SetButtonImage(UObject* Image, TEnumAsByte<enum ESlateBrushDrawType::Type> DrawType, FMargin Box_Border_Margin, TEnumAsByte<enum ESlateBrushTileType::Type> Image_Tiling, FSlateBrushOutlineSettings RoundedBox_OutlineSettings)
+{
+	WidgetStyle.Normal.SetResourceObject(Image);
+	WidgetStyle.Normal.DrawAs = DrawType;
+	WidgetStyle.Normal.Margin = Box_Border_Margin;
+	WidgetStyle.Normal.Tiling = Image_Tiling;
+	WidgetStyle.Normal.OutlineSettings = RoundedBox_OutlineSettings;
+
+	WidgetStyle.Hovered.SetResourceObject(Image);
+	WidgetStyle.Hovered.DrawAs = DrawType;
+	WidgetStyle.Hovered.Margin = Box_Border_Margin;
+	WidgetStyle.Hovered.Tiling = Image_Tiling;
+	WidgetStyle.Hovered.OutlineSettings = RoundedBox_OutlineSettings;
+
+	WidgetStyle.Pressed.SetResourceObject(Image);
+	WidgetStyle.Pressed.DrawAs = DrawType;
+	WidgetStyle.Pressed.Margin = Box_Border_Margin;
+	WidgetStyle.Pressed.Tiling = Image_Tiling;
+	WidgetStyle.Pressed.OutlineSettings = RoundedBox_OutlineSettings;
+
+	WidgetStyle.Disabled.SetResourceObject(Image);
+	WidgetStyle.Disabled.DrawAs = DrawType;
+	WidgetStyle.Disabled.Margin = Box_Border_Margin;
+	WidgetStyle.Disabled.Tiling = Image_Tiling;
+	WidgetStyle.Disabled.OutlineSettings = RoundedBox_OutlineSettings;
+
+	SetStyle(WidgetStyle);
 }

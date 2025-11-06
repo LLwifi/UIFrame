@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -59,6 +59,10 @@ public:
 		void SetButtonInfo(FPrefabButtonInfo ButtonInfo);
 	UFUNCTION(BlueprintPure)
 		FPrefabButtonInfo GetButtonInfo();
+
+	//修改按钮的纹理图片
+	UFUNCTION(BlueprintCallable)
+	void SetButtonImage(UObject* Image, TEnumAsByte<enum ESlateBrushDrawType::Type > DrawType, FMargin Box_Border_Margin, TEnumAsByte<enum ESlateBrushTileType::Type> Image_Tiling, FSlateBrushOutlineSettings RoundedBox_OutlineSettings);
 
 public:
 	//要使用的预制信息

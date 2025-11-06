@@ -66,6 +66,10 @@ public:
 		void SetTextInfo(FPrefabTextInfo TextInfo);
 	UFUNCTION(BlueprintPure)
 		FPrefabTextInfo GetTextInfo();
+	
+	//设置字体风格
+	UFUNCTION(BlueprintCallable)
+	void SetTextBlockStyle(FTextBlockStyle TextBlockStyle);
 
 	//设置换行
 	UFUNCTION(BlueprintCallable)

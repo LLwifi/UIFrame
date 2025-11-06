@@ -94,6 +94,11 @@ FPrefabTextInfo UUI_Text::GetTextInfo()
 	return MyTextInfo;
 }
 
+void UUI_Text::SetTextBlockStyle(FTextBlockStyle TextBlockStyle)
+{
+	
+}
+
 void UUI_Text::SetWrapTextAt(float TextWrapTextAt)
 {
 	WrapTextAt = TextWrapTextAt;
