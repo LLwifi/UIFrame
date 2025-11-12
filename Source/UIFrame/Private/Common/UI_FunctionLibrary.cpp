@@ -4,6 +4,8 @@
 #include "Common/UI_FunctionLibrary.h"
 #include <Subsystems/SubsystemBlueprintLibrary.h>
 #include <UI_SubSystem.h>
+#include <EditorConfig/UI_CommonGameConfig.h>
+#include "Engine/AssetManager.h"
 
 TArray<UWidget*> UUI_FunctionLibrary::GetAllWidgetFromClass(UPanelWidget* PanelWidget, TSubclassOf<UWidget> WidgetClass, bool IsContainUserWidget/* = false*/)
 {
@@ -55,19 +57,57 @@ UUI_SubSystem* UUI_FunctionLibrary::GetUISubSystem(UObject* WorldContextObject)
 	return Cast<UUI_SubSystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(WorldContextObject, UUI_SubSystem::StaticClass()));
 }
 
-void UUI_FunctionLibrary::ShowTip(UObject* WorldContextObject, TSubclassOf<UUserWidget> WidgetClass, FText TipText, float DisplayTime, FName TipTag/* = "None"*/, FName UITag/* = "None"*/)
+void UUI_FunctionLibrary::ShowTipFromTipInfo(UObject* WorldContextObject, FUI_TipInfo TipInfo, FName UITag)
 {
-	if (WidgetClass)
+	if (WorldContextObject)
 	{
+		TSubclassOf<UUserWidget> TipPanelClass = UAssetManager::GetStreamableManager().LoadSynchronous(UUI_CommonGameConfig::GetInstance()->TipPanelClass);
 		UUI_SubSystem* UI_SubSystem = GetUISubSystem(WorldContextObject);
-		if (UI_SubSystem)
+		if (TipPanelClass && UI_SubSystem)
 		{
-			UWidget* TipUI = UI_SubSystem->ShowUIForClass(WidgetClass,true, UITag);
+			UWidget* TipUI = UI_SubSystem->ShowUIForClass(TipPanelClass, true, UITag);
 			if (TipUI)
 			{
-				IUI_Tip::Execute_AddTipText(TipUI, TipText, DisplayTime, TipTag);
+				IUI_Tip::Execute_AddTipText(TipUI, TipInfo);
 			}
 		}
 	}
-
 }
+
+void UUI_FunctionLibrary::ShowTipFromID(UObject* WorldContextObject, FName ID, FName UITag/* = "None"*/)
+{
+	if (WorldContextObject)
+	{
+		UDataTable* DT = UUI_CommonGameConfig::GetInstance()->TipInfoDatatable.LoadSynchronous();
+		if (DT)
+		{
+			FUI_TipInfo* TipInfo = DT->FindRow<FUI_TipInfo>(ID, TEXT(""));
+			if (TipInfo)
+			{
+				ShowTipFromTipInfo(WorldContextObject, *TipInfo, UITag);
+			}
+		}
+	}
+}
+
+//void UUI_FunctionLibrary::ShowTip(UObject* WorldContextObject, TSubclassOf<UUserWidget> WidgetClass, FText TipText, float DisplayTime, FName TipTag/* = "None"*/, FName UITag/* = "None"*/)
+//{
+//	if (WidgetClass)
+//	{
+//		UUI_SubSystem* UI_SubSystem = GetUISubSystem(WorldContextObject);
+//		if (UI_SubSystem)
+//		{
+//			UWidget* TipUI = UI_SubSystem->ShowUIForClass(WidgetClass,true, UITag);
+//			if (TipUI)
+//			{
+//				IUI_Tip::Execute_AddTipText(TipUI, TipText, DisplayTime, TipTag);
+//			}
+//		}
+//	}
+//
+//}
+//
+//void UUI_FunctionLibrary::ShowTipFromClass(UObject* WorldContextObject, TSubclassOf<UUserWidget> WidgetClass, FText TipText, float DisplayTime, FName TipTag, FName UITag)
+//{
+//	
+//}

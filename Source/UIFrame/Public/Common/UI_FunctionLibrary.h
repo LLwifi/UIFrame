@@ -82,9 +82,16 @@ public:
 	UFUNCTION(BlueprintPure, meta = (WorldContext = "WorldContextObject"))
 	static UUI_SubSystem* GetUISubSystem(UObject* WorldContextObject);
 
-	//显示提示文本(提示文本，显示时长)
+	/*通过Tip信息显示提示文本
+	*/
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
-	static void ShowTip(UObject* WorldContextObject, TSubclassOf<UUserWidget> WidgetClass, FText TipText, float DisplayTime, FName TipTag = "None", FName UITag = "None");
+	static void ShowTipFromTipInfo(UObject* WorldContextObject, FUI_TipInfo TipInfo, FName UITag = "None");
+
+	/*通过ID显示提示文本
+	* ID：通过该ID会查询【提示表】UUI_CommonGameConfig-》TipInfoDatatable获取提示文本
+	*/
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static void ShowTipFromID(UObject* WorldContextObject, FName ID, FName UITag = "None");
 };
 
 

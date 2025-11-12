@@ -63,8 +63,11 @@ public:
 		TSoftClassPtr<UUserWidget> DebugPanelClass;
 
 	//Tips面板
-	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<UUserWidget> TipPanelClass;
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Tip")
+		TSoftClassPtr<UUserWidget> TipPanelClass;
+	//Tip文本配置表
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Tip")
+		TSoftObjectPtr<UDataTable> TipInfoDatatable;
 
 	//ScrollBox的滚动条样式,Name是方案名称，Value是Style值
 	UPROPERTY(Config,EditAnywhere,BlueprintReadOnly,Category = "ScrollBox")

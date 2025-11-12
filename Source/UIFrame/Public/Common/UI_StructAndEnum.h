@@ -9,7 +9,6 @@
 * 读：通过预制好的信息生成外表
 * 写：将当前控件的信息储存到预制表
 */
-
 USTRUCT(BlueprintType)
 struct FUI_PrefabOperation
 {
@@ -35,3 +34,36 @@ public:
 		FUI_PrefabOperation Operation;
 };
 
+/*提示信息结构
+*/
+USTRUCT(BlueprintType)
+struct FUI_TipInfo : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
+	{
+		FUI_TipInfo* Info = InDataTable->FindRow<FUI_TipInfo>(InRowName, TEXT(""));
+		if (Info && InRowName.ToString().IsNumeric())
+		{
+			Info->ID = InRowName;
+		}
+	}
+public:
+	/*提示文本的唯一标识
+	* 该值无法被设置，自动读取行名称设置
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FName ID;
+	//提示文本
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText TipText; 
+	//显示时长
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DisplayTime = 3.0f;
+	/*提示音效
+	* 在出现提示内容时播放（通常是2D音效）
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSoftObjectPtr<USoundBase> TipSound;
+};

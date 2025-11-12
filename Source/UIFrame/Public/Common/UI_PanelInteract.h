@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "GameplayTagContainer.h"
+#include "UI_StructAndEnum.h"
 #include "UI_PanelInteract.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(UIFrame, Log, All);
@@ -204,10 +205,10 @@ class UIFRAME_API IUI_Tip
 	GENERATED_BODY()
 public:
 	/*
-	* 添加一个提示文本（提示文本，显示时长，自定义标记）
+	* 添加一个提示文本（提示文本，显示时长）
 	*/
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void AddTipText(const FText& TipText, float DisplayTime, FName TipTag = "None");
-	virtual void AddTipText_Implementation(const FText& TipText, float DisplayTime, FName TipTag = "None");
+	void AddTipText(FUI_TipInfo TipInfo);
+	virtual void AddTipText_Implementation(FUI_TipInfo TipInfo);
 
 };

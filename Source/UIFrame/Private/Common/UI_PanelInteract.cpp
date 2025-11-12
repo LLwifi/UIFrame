@@ -97,6 +97,6 @@ FGameplayTag IUI_PanelInteract::GetUILayoutTag_Implementation()
 	return Tag_UI_Layout_Mid;
 }
 
-void IUI_Tip::AddTipText_Implementation(const FText& TipText, float DisplayTime, FName TipTag)
+void IUI_Tip::AddTipText_Implementation(FUI_TipInfo)
 {
 }

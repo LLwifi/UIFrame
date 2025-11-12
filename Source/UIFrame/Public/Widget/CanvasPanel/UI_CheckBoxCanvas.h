@@ -27,61 +27,59 @@ public:
 
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 public:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void Init();
+
+	UFUNCTION()
+		void AutoFindCheckBox();
 
 	//改变AllCheckBox中某个目标的状态
 	void ChangeCheckState(TPair<UCheckBox*, bool>& OnceCheckBox, bool IsCheck);
 
-	//单选更新
-	UFUNCTION()
-		void SingleUpdate();
+	/*CheckBox的边界检查（带有还原操作）
+	* Return : 是否处于边界中
+	* CurCheckNum：当前勾选的CheckBox数量
+	*/
+	UFUNCTION(BlueprintPure)
+		bool CheckBoxRangeCheck(int32 CurCheckNum);
 
-	//多选更新
+	//某个CheckBox的回调
 	UFUNCTION()
-		void MultiUpdate();
+		void SomeCheckBoxChange(bool bIsChecked);
 
-	//空选检查
-	UFUNCTION()
-		void IsNoneCheck();
+	//是否允许多选
+	UFUNCTION(BlueprintPure)
+		bool IsMultiCheck();
 
-	//CheckBox回调
-	UFUNCTION()
-		void CheckBoxChange(bool bIsChecked);
+	//设置是否允许为空（一个都不选）
+	UFUNCTION(BlueprintCallable)
+		bool SetIsNoneCheck(bool IsNoneCheck);
 
-	//更新选择下标
-	UFUNCTION()
-		void CurCheckIndexUpdate();
+	//设置最大勾选数量
+	UFUNCTION(BlueprintCallable)
+		void SetMaxCheckNum(int32 Num);
 
 public:
-	UPROPERTY()
-		bool bIsInit = false;
-	//是否允许多选
+	/*最大选择数量
+	* 该值范围为1~CheckBox的数量
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool bIsMultiCheck = false;
-
-	//最大多选数量
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIsMultiCheck", EditConditionHides))
 		int32 MaxCheckNum = 1;
 
 	//是否允许一个都不选择
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool bIsNoneCheck = false;
 
-	//是否自动寻找CheckBox（只会寻找该面板下的CheckBox）
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool bAutoFindCheckBox = true;
-
-	//TMap<UI,初始是否开启>
+	//TMap<CheckUI,初始是否开启>
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TMap<UCheckBox*, bool> AllCheckBox;
 
-	//初始开启CheckBox的下标  -1表示多选
+	//勾选了的CheckBox的下标
 	UPROPERTY(VisibleAnywhere)
 		TArray<int32> CurCheckIndex;
-	//上次选择的下标----该值在运行后才开始生效
-	UPROPERTY()
-		int32 LastCheckIndex = 0;
+	//按顺序勾选的下标
+	UPROPERTY(VisibleAnywhere)
+		TArray<UCheckBox*> CurSequenceCheckBox;
 
 	UPROPERTY(BlueprintAssignable)
 		FOnCheckBoxsStateChanged CheckBoxsStateChanged;
