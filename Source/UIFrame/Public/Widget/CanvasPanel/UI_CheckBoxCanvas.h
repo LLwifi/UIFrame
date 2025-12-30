@@ -74,9 +74,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TMap<UCheckBox*, bool> AllCheckBox;
 
-	//勾选了的CheckBox的下标
-	UPROPERTY(VisibleAnywhere)
-		TArray<int32> CurCheckIndex;
 	//按顺序勾选的下标
 	UPROPERTY(VisibleAnywhere)
 		TArray<UCheckBox*> CurSequenceCheckBox;

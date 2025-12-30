@@ -75,6 +75,12 @@ class UUI_PanelInteract : public UInterface
 
 /**
  * UI面板交互
+ * 如果是直接继承该接口，至少需要实现以下函数
+ * IsShow：获取当前UI的显示状态
+ * Show：用于显示UI，需要注意的是该函数会被反复调用，可以利用IsShow使得最终的显示只运行一次（已经显示后不在显示）
+ * Hide：用于隐藏UI，需要注意的是该函数会被反复调用，可以利用IsShow使得最终的显示只运行一次（已经显示后不在显示）
+ * IsControlledByEsc：是否被Esc管理
+ * Esc：当IsControlledByEsc返回为true时，该函数决定了这个UI在Esc时需要处理的操作，通常可以等同于HideUI
  */
 class UIFRAME_API IUI_PanelInteract
 {

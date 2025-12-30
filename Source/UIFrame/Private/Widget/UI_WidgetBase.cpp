@@ -89,7 +89,7 @@ void UUI_WidgetBase::Hide_Implementation(UWidget* TriggerUI, EUIShowHideType Typ
 	UEnum* const CompileModeEnum = StaticEnum<EUIShowHideType>();
 	if (CompileModeEnum)
 	{
-		UE_LOG(UIFrame, Log, TEXT("Event-Hide(%s) UI-[%s]"),
+		UE_LOG(UIFrame, Log, TEXT("Event-Hide(%s) UI-[%s] From-[]"),
 			*CompileModeEnum->GetDisplayNameTextByValue(static_cast<uint8>(Type)).ToString(), *GetName());
 	}
 

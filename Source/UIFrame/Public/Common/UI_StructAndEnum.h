@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include <Engine/DataTable.h>
+#include <GameplayTagContainer.h>
+#include "Common/UI_GameplayTag.h"
 #include "UI_StructAndEnum.generated.h"
 
 /*
@@ -51,13 +53,18 @@ public:
 	}
 public:
 	/*提示文本的唯一标识
-	* 该值无法被设置，自动读取行名称设置
+	* 该值无法被设置，在修改后自动读取行名称设置
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FName ID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "TipType"))
+	FGameplayTagContainer TypeTag = FGameplayTagContainer(TAG_TipType_Common);
+	//备注
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Tip;
 	//提示文本
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText TipText; 
+	FText TipText;
 	//显示时长
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DisplayTime = 3.0f;

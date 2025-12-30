@@ -51,13 +51,16 @@ TSharedRef<SWidget> UUI_CheckBoxCanvas::RebuildWidget()
 
 void UUI_CheckBoxCanvas::Init()
 {
+	FScriptDelegate ScriptDelegate;
+	ScriptDelegate.BindUFunction(this, FName("SomeCheckBoxChange"));
 	for (TPair<UCheckBox*, bool>& P : AllCheckBox)
 	{
 		if (IsValid(P.Key))
 		{
-			FScriptDelegate ScriptDelegate;
-			ScriptDelegate.BindUFunction(this, "CheckBoxChange");
-			P.Key->OnCheckStateChanged.Add(ScriptDelegate);
+			if (!P.Key->OnCheckStateChanged.Contains(ScriptDelegate))
+			{
+				P.Key->OnCheckStateChanged.Add(ScriptDelegate);
+			}
 		}
 	}
 }
@@ -78,7 +81,7 @@ void UUI_CheckBoxCanvas::AutoFindCheckBox()
 
 void UUI_CheckBoxCanvas::ChangeCheckState(TPair<UCheckBox*, bool>& OnceCheckBox, bool IsCheck)
 {
-	if (IsValid(OnceCheckBox.Key) && OnceCheckBox.Key->IsChecked() != IsCheck)//UI有效，且值不同
+	if (IsValid(OnceCheckBox.Key) && (OnceCheckBox.Key->IsChecked() != IsCheck || OnceCheckBox.Value != IsCheck))//UI有效，且值不同
 	{
 		OnceCheckBox.Value = IsCheck;
 		OnceCheckBox.Key->SetIsChecked(IsCheck);
@@ -118,7 +121,7 @@ bool UUI_CheckBoxCanvas::CheckBoxRangeCheck(int32 CurCheckNum)
 	else if (!bIsNoneCheck && CurCheckNum < 1)//判断最小数量 不允许为空时 && 为空了
 	{
 		//进行还原，这种情况通常是由 1 ——》 0
-		ChangeCheckState(AllCheckBox.Get(FSetElementId::FromInteger(CheckBoxs.Find(CurSequenceCheckBox[0]))), true);
+		ChangeCheckState(AllCheckBox.Get(FSetElementId::FromInteger(1)), true);
 		return false;
 	}
 	return true;
@@ -126,25 +129,16 @@ bool UUI_CheckBoxCanvas::CheckBoxRangeCheck(int32 CurCheckNum)
 
 void UUI_CheckBoxCanvas::SomeCheckBoxChange(bool bIsChecked)
 {
-	TArray<int32> NewCheckIndex;
-	int32 Index = 0;
 	//将CheckBox的状态刷新给Map 
 	for (TPair<UCheckBox*, bool>& CheckBox : AllCheckBox)
 	{
 		ChangeCheckState(CheckBox, CheckBox.Key->IsChecked());
-		if (CheckBox.Key->IsChecked())
-		{
-			NewCheckIndex.Add(Index);
-		}
-		Index++;
 	}
-	if (CheckBoxRangeCheck(NewCheckIndex.Num()))
-	{
-		//修改通过，刷新下标记录
-		CurCheckIndex = NewCheckIndex;
-	}
+
+	CheckBoxRangeCheck(CurSequenceCheckBox.Num());
+
 	//触发事件
-	CheckBoxsStateChanged.Broadcast(CurCheckIndex);
+	//CheckBoxsStateChanged.Broadcast(CurCheckIndex);
 }
 
 bool UUI_CheckBoxCanvas::IsMultiCheck()
@@ -155,7 +149,7 @@ bool UUI_CheckBoxCanvas::IsMultiCheck()
 bool UUI_CheckBoxCanvas::SetIsNoneCheck(bool IsNoneCheck)
 {
 	bIsNoneCheck = IsNoneCheck;
-	if (!bIsNoneCheck && CurCheckIndex.Num() < 1)//只有当突然不允许为空时，才会需要去进行自动指定
+	if (!bIsNoneCheck && CurSequenceCheckBox.Num() < 1)//只有当突然不允许为空时，才会需要去进行自动指定
 	{
 		ChangeCheckState(AllCheckBox.Get(FSetElementId::FromInteger(0)), true);//将首个勾选
 	}

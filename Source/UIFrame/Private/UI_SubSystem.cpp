@@ -152,6 +152,7 @@ void UUI_SubSystem::ShowUI(UWidget* Widget, bool CheckUIState /*= true*/)
 	//实现了IUI_PanelInteract的Widget
 	if (IsValid(Widget))
 	{
+		UE_LOG(UIFrame, Warning, TEXT("ShowUI[%s]----------------------------------------------------------Start"), *Widget->GetName());
 		//实现了IUI_PanelInteract的Widget
 		if (Widget->Implements<UUI_PanelInteract>())
 		{
@@ -170,6 +171,7 @@ void UUI_SubSystem::ShowUI(UWidget* Widget, bool CheckUIState /*= true*/)
 		{
 			AddUI(Widget, "", false);
 		}
+		UE_LOG(UIFrame, Warning, TEXT("ShowUI[%s]----------------------------------------------------------End"), *Widget->GetName());
 	}
 }
 
@@ -178,6 +180,7 @@ void UUI_SubSystem::HideUI(UWidget* Widget, bool CheckUIState /*= true*/, bool C
 	//当前UI正在显示 实现了IUI_PanelInteract的Widget 是否需要检测当前UI的显示隐藏状态
 	if (IsValid(Widget) && Widget->Implements<UUI_PanelInteract>() && (CheckUIState?IUI_PanelInteract::Execute_IsShow(Widget):true))
 	{
+		UE_LOG(UIFrame, Warning, TEXT("HideUI[%s]----------------------------------------------------------Start"), *Widget->GetName());
 		if (CheckESC)
 		{
 			UUserWidget* EscTopUI;
@@ -192,7 +195,9 @@ void UUI_SubSystem::HideUI(UWidget* Widget, bool CheckUIState /*= true*/, bool C
 		}
 		IUI_PanelInteract::Execute_Hide(Widget, Widget, EUIShowHideType::Normal);
 		HideUIEvent.Broadcast(Widget);
+		UE_LOG(UIFrame, Warning, TEXT("HideUI[%s]----------------------------------------------------------End"), *Widget->GetName());
 	}
+
 }
 
 void UUI_SubSystem::SwitchUI(UWidget* Widget, bool CheckUIState, bool HideIsCheckESC)
@@ -222,7 +227,6 @@ UWidget* UUI_SubSystem::ShowUIForClass(TSubclassOf<UUserWidget> UIClass, bool Ch
 	{
 		Widget = CreateUI(UIClass, nullptr, true, UITag);
 	}
-
 	return Widget;
 }
 
@@ -375,7 +379,7 @@ void UUI_SubSystem::SetMainPanel(UWidget* NewMainPanel)
 {
 	FString LastMainPanelName = IsValid(MainPanel)?MainPanel->GetName():"NULL";
 	MainPanel = NewMainPanel;
-	UE_LOG(UIFrame, Log, TEXT("UpdateMainPanel [%s]——>[%s]"),*LastMainPanelName,*MainPanel->GetName());
+	UE_LOG(UIFrame, Warning, TEXT("UpdateMainPanel [%s]——>[%s]"),*LastMainPanelName,*MainPanel->GetName());
 	MainUIChange.Broadcast(MainPanel);
 }
 
@@ -446,14 +450,15 @@ void UUI_SubSystem::SeparatelyUICheck(UWidget* UI, bool IsShow /*= true*/)
 			}
 		}
 		//处理顶层UI下的全部UI
-		UE_LOG(UIFrame, Log, TEXT("Event-Esc----------------------------------------------------------Start"));
+		UE_LOG(UIFrame, Log, TEXT("Event-SeparatelyEsc----------------------------------------------------------Start"));
 		for (int32 i = 0; i < ESCList.Num(); i++)
 		{
 			EscChangeUIDisplayState(ESCList[i],UI, i >= NextSeparatelyUIIndex);
 		}
 		EscChangeUIDisplayState(MainPanel,UI, NextSeparatelyUIIndex == -1);
-		UE_LOG(UIFrame, Log, TEXT("Event-Esc----------------------------------------------------------End"));
+		UE_LOG(UIFrame, Log, TEXT("Event-SeparatelyEsc----------------------------------------------------------End"));
 	}
+
 }
 
 void UUI_SubSystem::EscChangeUIDisplayState(UWidget* UI, UWidget* TriggerUI, bool IsShow)
@@ -602,7 +607,8 @@ void UUI_SubSystem::HideAllEscUI(bool IsClearEscList/* = false*/)
 	{
 		if (UserWidget)
 		{
-			IUI_PanelInteract::Execute_Esc(UserWidget,nullptr);
+			HideUI(UserWidget);
+			//IUI_PanelInteract::Execute_Esc(UserWidget,nullptr);
 		}
 	}
 	if(IsClearEscList)
@@ -617,6 +623,7 @@ void UUI_SubSystem::HideAllEscUI(bool IsClearEscList/* = false*/)
 	{
 		SetUIInputMode(EUIInputMode::Game);
 	}
+	ESCListChange.Broadcast(ESCList);
 }
 
 void UUI_SubSystem::EscAddCheck(UWidget* Widget)

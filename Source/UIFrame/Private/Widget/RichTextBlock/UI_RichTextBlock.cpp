@@ -59,8 +59,17 @@ void UUI_RichTextBlock::AppendRichTextContent(FUI_RichTextContent Content)
 
 void UUI_RichTextBlock::AppendTextContent(FName RowName, FText TextContent, int32 LineBreakNum /*= 0*/)
 {
-	FString Content = GetText().ToString();
-	Content.Append("<" + RowName.ToString() + ">" + TextContent.ToString() + "</>");
+	FString Content = GetText().ToString();//获取原本就存在的文本内容
+	FString Content_N = TextContent.ToString();
+	while (Content_N.Contains("\r\n"))//处理配置内容就带有换行符号的情况
+	{
+		FString L, R;
+		Content_N.Split("\r\n", &L, &R);
+		Content.Append("<" + RowName.ToString() + ">" + L + "</>" + "\n");
+		Content_N = R;
+	}
+	Content.Append("<" + RowName.ToString() + ">" + Content_N + "</>");
+	
 	for (int32 i = 0; i < LineBreakNum; i++)
 	{
 		Content.Append("\n");
