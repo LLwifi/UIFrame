@@ -40,7 +40,8 @@ public class UIFrame : ModuleRules
 				"SlateCore",
 				"UMG",
 				"DeveloperSettings",
-				"GameplayTags"
+				"GameplayTags",
+                "InputCore",//UI按键输入
 				//"DetailCustomizations",//自定义细节面板
 				//"UnrealEd",//自动保存文件
 				// ... add private dependencies that you statically link with here ...	

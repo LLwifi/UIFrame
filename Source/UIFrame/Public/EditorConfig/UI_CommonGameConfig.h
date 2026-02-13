@@ -15,6 +15,16 @@ enum class ENOSScrollBoxStyle : uint8
 	Common = 1 UMETA(DisplayName = "通用"),
 };
 
+USTRUCT(BlueprintType)
+struct FUI_NameArray
+{
+	GENERATED_BODY()
+public:
+	//响应的UI类
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FName> NameArray;
+};
+
 /**
  * 编辑器下的通用UI框架配置
  */
@@ -73,4 +83,17 @@ public:
 	UPROPERTY(Config,EditAnywhere,BlueprintReadOnly,Category = "ScrollBox")
 	    TMap<ENOSScrollBoxStyle,FScrollBarStyle> ScrollBoxStyleMap;
 
+	/*不同的按键UI映射配置表，表结构体类型为FUI_UIKeyBoardMapping
+	* 通过该表可以实现按键开/关UI
+	*/
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "UIKeyBoard")
+		TSoftObjectPtr<UDataTable> UIKeyBoardMappingDatatable;
+	/*不同关卡下的默认UI映射配置<关卡,RowName数组>
+	* 该配置通过UUI_RootPanel在构造时通知UISubSystem进行设置
+	*/
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "UIKeyBoard", meta = (AllowedClasses = "/Script/Engine.World"))
+		TMap<FSoftObjectPath, FUI_NameArray> LevelUIKeyBoardMapping;
+	//哪些UI在显示后需要屏蔽按键/屏蔽UI按键的UIclass
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "UIKeyBoard")
+		TArray<TSoftClassPtr<UUserWidget>> BlockUIKeyBoardUIClass;
 };

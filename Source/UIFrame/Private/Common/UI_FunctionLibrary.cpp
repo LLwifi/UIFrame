@@ -7,6 +7,18 @@
 #include <EditorConfig/UI_CommonGameConfig.h>
 #include "Engine/AssetManager.h"
 
+#if WITH_EDITOR
+TArray<FName> UUI_FunctionLibrary::GetDTUIKeyBoardMappingRowNames()
+{
+	UDataTable* DataTable = UUI_CommonGameConfig::GetInstance()->UIKeyBoardMappingDatatable.LoadSynchronous();
+	if (DataTable)
+	{
+		return DataTable->GetRowNames();
+	}
+	return TArray<FName>();
+}
+#endif
+
 TArray<UWidget*> UUI_FunctionLibrary::GetAllWidgetFromClass(UPanelWidget* PanelWidget, TSubclassOf<UWidget> WidgetClass, bool IsContainUserWidget/* = false*/)
 {
 	return UUI_FunctionLibrary::GetAllWidgetFromClass<UWidget>(PanelWidget,WidgetClass,IsContainUserWidget);

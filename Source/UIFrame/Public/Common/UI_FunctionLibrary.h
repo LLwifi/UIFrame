@@ -16,9 +16,14 @@ class UIFRAME_API UUI_FunctionLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 public:
+
+#if WITH_EDITOR
+	UFUNCTION()
+	static TArray<FName> GetDTUIKeyBoardMappingRowNames();
+#endif
+
 	//从某个节点开始获取往下的全部UI控件
 	template< class T >
-	UFUNCTION()
 	static TArray<T*> GetAllWidgetFromClass(UPanelWidget* PanelWidget, TSubclassOf<T> WidgetClass, bool IsContainUserWidget = false)
 	{
 		TArray<T*> AllWidget;

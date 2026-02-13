@@ -11,6 +11,62 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUISubSystem_ESCChange, const TArray
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUISubSystem_UIInputModeChange, EUIInputMode, UIInputMode);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUISubSystem_UIChange, UWidget*, ChangeUI);
 
+USTRUCT(BlueprintType)
+struct FUI_UIKeyBoardInfo
+{
+	GENERATED_BODY()
+public:
+	//响应的UI类
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TSoftClassPtr<UUserWidget> UIClass;
+
+	//Show目标UI的按键类型
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TEnumAsByte<EInputEvent> ShowPressedType = EInputEvent::IE_Pressed;
+	//Show按下的时间
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditConditionHides, EditCondition = "ShowPressedType == EInputEvent::IE_Repeat"))
+	float ShowKeyDownTime = 1.0f;
+	//Hide目标UI的按键类型
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TEnumAsByte<EInputEvent> HidePressedType = EInputEvent::IE_Pressed;
+	//Hide按下的时间
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditConditionHides, EditCondition = "HidePressedType == EInputEvent::IE_Repeat"))
+	float HideKeyDownTime = 1.0f;
+};
+
+USTRUCT(BlueprintType)
+struct FUI_UIKeyBoardMapping : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	FUI_UIKeyBoardMapping(){}
+	FUI_UIKeyBoardMapping(TPair<FKey, FUI_UIKeyBoardInfo> pair){ UIKeyBoardMapping.Add(pair); }
+
+	FUI_UIKeyBoardInfo operator[](const FKey& Key) const { return UIKeyBoardMapping[Key]; }
+	bool Contains(const FKey& Key) { return UIKeyBoardMapping.Contains(Key); }
+	TMap<FKey, FUI_UIKeyBoardInfo> Append(FUI_UIKeyBoardMapping Mapping)
+	{
+		UIKeyBoardMapping.Append(Mapping.UIKeyBoardMapping);
+		return UIKeyBoardMapping;
+	}
+	//通过UIClass获取对应的Key
+	TPair<FKey, FUI_UIKeyBoardInfo> GetPairFromUIClass(TSoftClassPtr<UUserWidget> UIClass)
+	{
+		for (TPair<FKey, FUI_UIKeyBoardInfo>& pair : UIKeyBoardMapping)
+		{
+			if (pair.Value.UIClass == UIClass)
+			{
+				return pair;
+			}
+		}
+		TPair<FKey, FUI_UIKeyBoardInfo> ReturnPair;
+		return ReturnPair;
+	}
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TMap<FKey, FUI_UIKeyBoardInfo> UIKeyBoardMapping;
+};
+
 /**
  UI子系统
  通过该系统创建的UI可以被有效的管理起来
@@ -107,11 +163,11 @@ public:
 		void DeleteUI(UUserWidget* UI,FName UITag = "");
 	
 	//获取UI（UI类型，UI标记）
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (AdvancedDisplay = "1", DeterminesOutputType = "UIClass"))
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = "1", DeterminesOutputType = "UIClass"))
 		UWidget* GetUI(TSubclassOf<UUserWidget> UIClass, FName UITag = "");
 
 	//获取全部同类型的UI（UI类型）
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (AdvancedDisplay = "1", DeterminesOutputType = "UIClass"))
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = "1", DeterminesOutputType = "UIClass"))
 		TArray<UWidget*> GetAllUIForClass(TSubclassOf<UUserWidget> UIClass, TArray<FName>& AllUITag);
 
 	//设置UI输入模式
@@ -125,6 +181,12 @@ public:
 	//调试面板
 	UFUNCTION(BlueprintCallable)
 	UWidget* DebugPanelOperate(bool IsShow = true);
+
+	/*判断UI是否为显示状态
+	* 注意：该UI未创建时返回也为false
+	*/
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = "1"))
+	bool UIIsShow(TSubclassOf<UUserWidget> UIClass, FName UITag = "");
 	 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -280,7 +342,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		URedPointTree* CurRedPointTree;
 
-//---------------------------------------------------------------------Layout
+//--------------------------------------Layout------------------------------------------
 public:
 	UFUNCTION()
 		void RootPanelCheck();
@@ -316,4 +378,52 @@ public:
 	//当前游戏的根UI
 	UPROPERTY(BlueprintReadOnly)
 		UUserWidget* RootPanel;
+
+public:
+//--------------------------------------UIKeyBoard------------------------------------------
+
+	//任意键的输入
+	UFUNCTION(BlueprintCallable)
+	void AnyKeyInput(const FKey& InKey, bool IsPressed);
+
+	//按键通过的回调
+	UFUNCTION(BlueprintCallable)
+	void AnyKeyPassBack();
+
+	/*将UIKeyBoardMapping设置为一个新的值
+	* 适合在大场景切换时使用
+	*/
+	UFUNCTION(BlueprintCallable)
+	void SetUIKeyBoardMapping(FUI_UIKeyBoardMapping KeyBoardMapping);
+
+	UFUNCTION(BlueprintCallable)
+	void AppendUIKeyBoardMapping(FUI_UIKeyBoardMapping KeyBoardMapping);
+
+	UFUNCTION(BlueprintCallable)
+	void SetUIKeyBoardMappingFromRowName(UPARAM(Meta = (GetOptions = "UIFrame.UI_FunctionLibrary.GetDTUIKeyBoardMappingRowNames")) FName RowName);
+
+	UFUNCTION(BlueprintCallable)
+	void AppendUIKeyBoardMappingFromRowName(UPARAM(Meta = (GetOptions = "UIFrame.UI_FunctionLibrary.GetDTUIKeyBoardMappingRowNames")) FName RowName);
+
+public:
+	//当前正在Show的且需要屏蔽UI按键映射的UI
+	UPROPERTY(BlueprintReadOnly)
+	TArray<UWidget*> CurBlockShowWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTimerHandle PressedTimeHandle;
+
+	/*当前按下的键
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FKey CurPressedKey;
+
+	//当前正在使用的按键UI映射,实时为最新的设置
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FUI_UIKeyBoardMapping CurUIKeyBoardMapping;
+
+	/*返回UI按键映射，该值会被动态设置为上次真正有效的映射值，无需配置
+	*/
+	UPROPERTY(BlueprintReadWrite)
+	FUI_UIKeyBoardMapping BackUIKeyBoardMapping;
 };

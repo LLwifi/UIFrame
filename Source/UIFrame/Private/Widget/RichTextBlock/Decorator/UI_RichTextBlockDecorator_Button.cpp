@@ -21,13 +21,17 @@ public:
 		ButtonDecorator = Decorator;
 		ChildSlot
 		.VAlign(EVerticalAlignment::VAlign_Center)
+		.HAlign(EHorizontalAlignment::HAlign_Center)
 		[
 			SNew(SBox)
 			.VAlign(EVerticalAlignment::VAlign_Center)
+			.HAlign(EHorizontalAlignment::HAlign_Center)
 			[
 				SNew(SButton)
 				.ContentPadding(RTBButtonStyle.TextPadding)
 				.ButtonStyle(&RTBButtonStyle.ButtonStyle)
+				.VAlign(EVerticalAlignment::VAlign_Center)
+				.HAlign(EHorizontalAlignment::HAlign_Center)
 				[
 					SNew(SVerticalBox)
 					+ SVerticalBox::Slot()

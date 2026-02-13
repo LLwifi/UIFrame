@@ -153,6 +153,12 @@ void UUI_SubSystem::ShowUI(UWidget* Widget, bool CheckUIState /*= true*/)
 	if (IsValid(Widget))
 	{
 		UE_LOG(UIFrame, Warning, TEXT("ShowUI[%s]----------------------------------------------------------Start"), *Widget->GetName());
+		if (!CurBlockShowWidget.Contains(Widget) && UUI_CommonGameConfig::GetInstance()->BlockUIKeyBoardUIClass.Contains(Widget->GetClass()))
+		{
+			CurBlockShowWidget.Add(Widget);
+			BackUIKeyBoardMapping = CurUIKeyBoardMapping;
+			SetUIKeyBoardMapping(FUI_UIKeyBoardMapping(CurUIKeyBoardMapping.GetPairFromUIClass(Widget->GetClass())));
+		}
 		//实现了IUI_PanelInteract的Widget
 		if (Widget->Implements<UUI_PanelInteract>())
 		{
@@ -181,6 +187,18 @@ void UUI_SubSystem::HideUI(UWidget* Widget, bool CheckUIState /*= true*/, bool C
 	if (IsValid(Widget) && Widget->Implements<UUI_PanelInteract>() && (CheckUIState?IUI_PanelInteract::Execute_IsShow(Widget):true))
 	{
 		UE_LOG(UIFrame, Warning, TEXT("HideUI[%s]----------------------------------------------------------Start"), *Widget->GetName());
+		if (CurBlockShowWidget.Contains(Widget) && UUI_CommonGameConfig::GetInstance()->BlockUIKeyBoardUIClass.Contains(Widget->GetClass()))
+		{
+			CurBlockShowWidget.Remove(Widget);
+			if (CurBlockShowWidget.Num() > 0 && CurBlockShowWidget.Last())//如果还有其他屏蔽UI按键的UI正在显示，将返回按键设置为那个UI的按键
+			{
+				SetUIKeyBoardMapping(FUI_UIKeyBoardMapping(CurUIKeyBoardMapping.GetPairFromUIClass(CurBlockShowWidget.Last()->GetClass())));
+			}
+			else
+			{
+				SetUIKeyBoardMapping(BackUIKeyBoardMapping);
+			}
+		}
 		if (CheckESC)
 		{
 			UUserWidget* EscTopUI;
@@ -413,6 +431,16 @@ UWidget* UUI_SubSystem::DebugPanelOperate(bool IsShow /*= true*/)
 	}
 
 	return DebugPanel;
+}
+
+bool UUI_SubSystem::UIIsShow(TSubclassOf<UUserWidget> UIClass, FName UITag)
+{
+	UWidget* UI = GetUI(UIClass, UITag);
+	if (UI)
+	{
+		return IUI_PanelInteract::Execute_IsShow(UI);
+	}
+	return false;
 }
 
 void UUI_SubSystem::SeparatelyUICheck(UWidget* UI, bool IsShow /*= true*/)
@@ -794,5 +822,114 @@ bool UUI_SubSystem::AddUIToCanvasPanelLayout(UWidget* UI, UCanvasPanel* CanvasLa
 UUserWidget* UUI_SubSystem::GetRootPanel()
 {
 	return RootPanel;
+}
+
+void UUI_SubSystem::AnyKeyInput(const FKey& InKey, bool IsPressed)
+{
+	UE_LOG(UIFrame, Warning, TEXT("UUI_SubSystem --- AnyKeyInput[%s]"), *InKey.ToString(), IsPressed ? TEXT("Pressed") : TEXT("Released"));
+	if (CurUIKeyBoardMapping.Contains(InKey))
+	{
+		CurPressedKey = InKey;
+		bool IsPass = UIIsShow(CurUIKeyBoardMapping[InKey].UIClass.LoadSynchronous());//是否通过
+		TEnumAsByte<EInputEvent> PressedType = IsPass ? CurUIKeyBoardMapping[InKey].HidePressedType : CurUIKeyBoardMapping[InKey].ShowPressedType;
+		float KeyDownTime = IsPass ? CurUIKeyBoardMapping[InKey].HideKeyDownTime : CurUIKeyBoardMapping[InKey].ShowKeyDownTime;
+		IsPass = false;
+		switch (PressedType)
+		{
+		case IE_Pressed:
+		{
+			IsPass = IsPressed;
+			break;
+		}
+		case IE_Released:
+		{
+			IsPass = !IsPressed;
+			break;
+		}
+		case IE_Repeat:
+		{
+			if (IsPressed)
+			{
+				if (KeyDownTime > 0.0f)
+				{
+					GetWorld()->GetTimerManager().SetTimer(PressedTimeHandle, this, &UUI_SubSystem::AnyKeyPassBack, KeyDownTime);
+				}
+				else
+				{
+					AnyKeyPassBack();
+				}
+				
+			}
+			else
+			{
+				GetWorld()->GetTimerManager().ClearTimer(PressedTimeHandle);
+			}
+			break;
+		}
+		case IE_DoubleClick:
+		{
+			break;
+		}
+		case IE_Axis:
+		{
+			break;
+		}
+		case IE_MAX:
+		{
+			break;
+		}
+		default:
+			break;
+		}
+	
+		if (IsPass)
+		{
+			AnyKeyPassBack();
+		}
+	}
+}
+
+void UUI_SubSystem::AnyKeyPassBack()
+{
+	if (CurUIKeyBoardMapping.Contains(CurPressedKey))//避免在长按的过程中按了其他按键刷新了最新的按键信息
+	{
+		SwitchUIForClass(CurUIKeyBoardMapping[CurPressedKey].UIClass.LoadSynchronous());
+	}
+}
+
+void UUI_SubSystem::SetUIKeyBoardMapping(FUI_UIKeyBoardMapping KeyBoardMapping)
+{
+	CurUIKeyBoardMapping = KeyBoardMapping;
+}
+
+void UUI_SubSystem::AppendUIKeyBoardMapping(FUI_UIKeyBoardMapping KeyBoardMapping)
+{
+	CurUIKeyBoardMapping.Append(KeyBoardMapping);
+}
+
+void UUI_SubSystem::SetUIKeyBoardMappingFromRowName(FName RowName)
+{
+	UDataTable* DataTable = UUI_CommonGameConfig::GetInstance()->UIKeyBoardMappingDatatable.LoadSynchronous();
+	if (DataTable)
+	{
+		FUI_UIKeyBoardMapping* Info = DataTable->FindRow<FUI_UIKeyBoardMapping>(RowName, TEXT(""));
+		if (Info)
+		{
+			SetUIKeyBoardMapping(*Info);
+		}
+	}
+}
+
+void UUI_SubSystem::AppendUIKeyBoardMappingFromRowName(FName RowName)
+{
+	UDataTable* DataTable = UUI_CommonGameConfig::GetInstance()->UIKeyBoardMappingDatatable.LoadSynchronous();
+	if (DataTable)
+	{
+		FUI_UIKeyBoardMapping* Info = DataTable->FindRow<FUI_UIKeyBoardMapping>(RowName, TEXT(""));
+		if (Info)
+		{
+			AppendUIKeyBoardMapping(*Info);
+		}
+	}
 }
 
